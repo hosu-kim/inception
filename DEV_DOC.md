@@ -1,116 +1,31 @@
 # Developer Documentation
 
-## Prerequisites
+## Set up the Environment from Scratch
+1. Ensure Docker and Docker Compose are installed on your system.
+2. Verify that `/home/hoskim/data` is available as a volume storage location (managed automatically by the Makefile).
+3. Confirm the presence of `.env` inside the `srcs/` folder. It must contain the variables: `DOMAIN_NAME`, `LOGIN`, `MYSQL_DATABASE`, `MYSQL_USER`, `MYSQL_PASSWORD`, `MYSQL_ROOT_PASSWORD`, and `WP_*` credentials.
+4. Set up `/etc/hosts` to point the target domain (`hoskim.42.fr`) to `127.0.0.1`.
 
-- Debian/Ubuntu-based Virtual Machine
-- Docker Engine + Docker Compose v2 installed
-- `sudo` access on the VM
-- `git` installed
-
----
-
-## Setup from Scratch
-
-### 1. Clone the repository
-
+## Build and Launch the Project
+A `Makefile` handles all aspects of orchestration. 
+To build locally from scratch and launch containers:
 ```bash
-git clone <your-repo-url>
-cd inception
+make
 ```
-
-### 2. Configure the domain
-
-Add this line to `/etc/hosts` on the VM:
-```
-127.0.0.1 hoskim.42.fr
-```
-
+To do a full clean up including volumes, dangling images, and system pruning:
 ```bash
-echo "127.0.0.1 hoskim.42.fr" | sudo tee -a /etc/hosts
+make fclean
 ```
 
-### 3. Configure environment variables
-
-`srcs/.env` is not committed to git. Create or edit it with your credentials:
-
-```env
-DOMAIN_NAME=hoskim.42.fr
-
-MYSQL_DATABASE=wordpress
-MYSQL_USER=wpuser
-MYSQL_PASSWORD=your_password
-MYSQL_ROOT_PASSWORD=your_root_password
-
-WP_TITLE=Inception
-WP_ADMIN_USER=hoskim_admin
-WP_ADMIN_PASSWORD=your_admin_password
-WP_ADMIN_EMAIL=hoskim@student.42.fr
-WP_USER=hoskim
-WP_USER_PASSWORD=your_user_password
-WP_USER_EMAIL=hoskim_user@student.42.fr
-```
-
-> ⚠️ Never commit `.env` to git. It is listed in `.gitignore`.
-
-### 4. Data directories
-
-Created automatically by `make init`, but you can also create them manually:
-
-```bash
-mkdir -p /home/hoskim/data/wordpress
-mkdir -p /home/hoskim/data/mariadb
-```
-
----
-
-## Build & Launch
-
-```bash
-make        # init + docker compose up --build (detached)
-make down   # docker compose down
-make stop   # docker compose stop (keeps containers)
-make clean  # down + remove volumes and /home/hoskim/data
-make fclean # clean + remove all Docker images
-make re     # fclean + full rebuild
-```
-
----
-
-## Managing Containers & Volumes
-
-```bash
-# View running containers and their status
-docker compose -f srcs/docker-compose.yml ps
-
-# Execute a shell inside a container
-docker exec -it nginx bash
-docker exec -it wordpress bash
-docker exec -it mariadb bash
-
-# View real-time logs
-docker logs -f nginx
-docker logs -f wordpress
-docker logs -f mariadb
-
-# List all volumes
-docker volume ls
-
-# Inspect a volume (shows host path)
-docker volume inspect srcs_wordpress
-docker volume inspect srcs_mariadb
-
-# Connect to MariaDB directly
-docker exec -it mariadb mysql -u root -p
-```
-
----
+## Useful Commands
+- Rebuild containers manually: `docker compose -f srcs/docker-compose.yml build`
+- View live logs: `docker compose -f srcs/docker-compose.yml logs -f`
+- Enter a running container (e.g., NGINX): `docker exec -it nginx /bin/bash`
+- Inspect volumes: `docker volume ls`
 
 ## Data Persistence
+All persistent data is stored locally on the host machine using named volumes linked to:
+- **MariaDB data**: `/home/hoskim/data/mariadb`
+- **WordPress files**: `/home/hoskim/data/wordpress`
 
-| Data | Container path | Host path |
-|------|---------------|-----------|
-| WordPress files | `/var/www/html` | `/home/hoskim/data/wordpress` |
-| MariaDB database | `/var/lib/mysql` | `/home/hoskim/data/mariadb` |
-
-Both are Docker **named volumes** using a local bind-mount driver, so data is stored directly on the host filesystem. Data survives `make down` and VM reboots, but is deleted by `make clean`.
-
+These files are preserved even if the containers are destroyed or restarted, providing true data security across container lifecycles.

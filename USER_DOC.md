@@ -1,86 +1,31 @@
 # User Documentation
 
-## Services
+## Services Provided by the Stack
+This infrastructure runs a modern web stack over secure TLS connections:
+- **NGINX**: The single entrypoint (Reverse Proxy/Web Server) available on port 443 with TLSv1.2 & TLSv1.3.
+- **WordPress**: The Content Management System (PHP-FPM) to manage website content.
+- **MariaDB**: The relational database used to store WordPress configuration, posts, and user data.
 
-This stack provides three services, each running in its own Docker container:
+## Start and Stop the Project
+- **To start everything**: Navigate to the directory containing the `Makefile` and run:
+  ```bash
+  make
+  ```
+- **To stop everything without deleting data**:
+  ```bash
+  make stop
+  ```
 
-| Service   | Description                                              |
-|-----------|----------------------------------------------------------|
-| NGINX     | Sole entry point. Serves HTTPS only on port 443 (TLSv1.2/1.3). Forwards PHP requests to WordPress via FastCGI. |
-| WordPress | CMS powered by php-fpm. Handles all website content and administration. |
-| MariaDB   | Relational database. Stores all WordPress data (posts, users, settings). |
+## Access the Website and Administration Panel
+- **User Interface**: Once running, open your browser and visit: `https://hoskim.42.fr` (A self-signed SSL warning is normal).
+- **Admin Panel**: Visit `https://hoskim.42.fr/wp-admin` and login using the WordPress credentials.
 
-HTTP (port 80) is intentionally not exposed. All traffic must go through HTTPS.
+## Locate and Manage Credentials
+Credentials and environment variables are entirely managed in a single `.env` file located in the `srcs/` directory. Ensure no unauthorized users have read access to this file. Passwords can be changed here prior to the initial build.
 
----
-
-## Start / Stop
-
+## Check that Services are Running Correctly
+You can verify the status of the containers by running the following command from the `srcs` directory:
 ```bash
-make        # Build images and start all services
-make down   # Stop all services (data is preserved)
-make clean  # Stop services and delete all data
-make re     # Full rebuild from scratch
+docker compose ps
 ```
-
----
-
-## Access
-
-Before accessing the site, make sure your `/etc/hosts` contains:
-```
-127.0.0.1 hoskim.42.fr
-```
-
-| URL | Description |
-|-----|-------------|
-| `https://hoskim.42.fr` | WordPress website |
-| `https://hoskim.42.fr/wp-admin` | Administration panel |
-
-> A self-signed SSL certificate is used. Your browser will show a security warning — this is expected. Proceed by accepting the exception.
-
-### Admin login
-- **URL**: `https://hoskim.42.fr/wp-admin`
-- **Username**: defined as `WP_ADMIN_USER` in `srcs/.env`
-- **Password**: defined as `WP_ADMIN_PASSWORD` in `srcs/.env`
-
----
-
-## Credentials
-
-All credentials are stored in `srcs/.env`. This file is **never committed to git**.
-
-```
-srcs/.env
-├── MYSQL_DATABASE      # WordPress database name
-├── MYSQL_USER          # Database user for WordPress
-├── MYSQL_PASSWORD      # Database user password
-├── MYSQL_ROOT_PASSWORD # MariaDB root password
-├── WP_ADMIN_USER       # WordPress administrator username
-├── WP_ADMIN_PASSWORD   # WordPress administrator password
-├── WP_ADMIN_EMAIL      # WordPress administrator email
-├── WP_USER             # Secondary WordPress user
-└── WP_USER_PASSWORD    # Secondary user password
-```
-
-To update a credential: edit `srcs/.env`, then run `make re` to rebuild.
-
----
-
-## Check Services
-
-```bash
-# View status of all containers
-docker compose -f srcs/docker-compose.yml ps
-
-# View logs per service
-docker logs nginx
-docker logs wordpress
-docker logs mariadb
-
-# Follow logs in real time
-docker logs -f wordpress
-
-# Check volumes exist
-docker volume ls
-
+Alternatively, simply ensuring the website loads on your browser is a direct check for all 3 interoperating services.

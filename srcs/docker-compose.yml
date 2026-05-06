@@ -1,60 +1,55 @@
-version: '3.8'
+version: '3'
 
 services:
-  nginx:
-    build: ./requirements/nginx
-    image: nginx
-    container_name: nginx
-    ports:
-      - "443:443"
-    volumes:
-      - wordpress:/var/www/html
-    networks:
-      - inception
-    depends_on:
-      - wordpress
-    restart: unless-stopped
-
-  wordpress:
-    build: ./requirements/wordpress
-    image: wordpress
-    container_name: wordpress
-    volumes:
-      - wordpress:/var/www/html
-    networks:
-      - inception
-    depends_on:
-      - mariadb
-    env_file:
-      - .env
-    restart: unless-stopped
-
   mariadb:
-    build: ./requirements/mariadb
-    image: mariadb
+    build: requirements/mariadb
     container_name: mariadb
+    restart: always
+    env_file: .env
     volumes:
       - mariadb:/var/lib/mysql
     networks:
       - inception
-    env_file:
-      - .env
-    restart: unless-stopped
+
+  wordpress:
+    build: requirements/wordpress
+    container_name: wordpress
+    restart: always
+    env_file: .env
+    depends_on:
+      - mariadb
+    volumes:
+      - wordpress:/var/www/html
+    networks:
+      - inception
+
+  nginx:
+    build: requirements/nginx
+    container_name: nginx
+    restart: always
+    env_file: .env
+    ports:
+      - "443:443"
+    depends_on:
+      - wordpress
+    volumes:
+      - wordpress:/var/www/html
+    networks:
+      - inception
 
 volumes:
-  wordpress:
-    driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: /home/hoskim/data/wordpress
-
   mariadb:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: /home/hoskim/data/mariadb
+      device: /home/${LOGIN:-hosu}/data/mariadb
+  wordpress:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /home/${LOGIN:-hosu}/data/wordpress
 
 networks:
   inception:

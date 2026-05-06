@@ -1,28 +1,32 @@
-DATA_DIR	= /home/hoskim/data
-WP_DIR		= $(DATA_DIR)/wordpress
-DB_DIR		= $(DATA_DIR)/mariadb
+NAME = inception
+LOGIN = hoskim
+DATA_DIR = /home/$(LOGIN)/data
 
-all: init up
+all: up
 
-init:
-	@mkdir -p $(WP_DIR) $(DB_DIR)
-
-up:
-	@docker compose -f srcs/docker-compose.yml --env-file srcs/.env up -d --build
+up: setup
+	docker compose -f srcs/docker-compose.yml up -d --build
 
 down:
-	@docker compose -f srcs/docker-compose.yml --env-file srcs/.env down
+	docker compose -f srcs/docker-compose.yml down
 
 stop:
-	@docker compose -f srcs/docker-compose.yml --env-file srcs/.env stop
+	docker compose -f srcs/docker-compose.yml stop
 
-clean: down
-	@docker volume rm $$(docker volume ls -q) 2>/dev/null || true
-	@sudo rm -rf $(DATA_DIR)
+start:
+	docker compose -f srcs/docker-compose.yml start
+
+clean:
+	docker compose -f srcs/docker-compose.yml down -v
+	sudo rm -rf $(DATA_DIR)
 
 fclean: clean
-	@docker rmi -f $$(docker images -qa) 2>/dev/null || true
+	docker system prune -af
 
 re: fclean all
 
-.PHONY: all init up down stop clean fclean re
+setup:
+	mkdir -p $(DATA_DIR)/mariadb
+	mkdir -p $(DATA_DIR)/wordpress
+
+.PHONY: all up down stop start clean fclean re setup

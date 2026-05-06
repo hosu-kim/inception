@@ -1,13 +1,15 @@
-FROM debian:bullseye
+FROM debian:bookworm
 
-RUN apt-get update && apt-get install -y \
-    mariadb-server \
-    && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && \
+    apt-get install -y mariadb-server && \
+    mkdir -p /run/mysqld && \
+    chown -R mysql:mysql /run/mysqld
 
 COPY conf/50-server.cnf /etc/mysql/mariadb.conf.d/50-server.cnf
-COPY tools/db-setup.sh /usr/local/bin/db-setup.sh
-RUN chmod +x /usr/local/bin/db-setup.sh
+COPY tools/setup.sh /usr/local/bin/
+
+RUN chmod +x /usr/local/bin/setup.sh
 
 EXPOSE 3306
 
-ENTRYPOINT ["db-setup.sh"]
+CMD ["/usr/local/bin/setup.sh"]
