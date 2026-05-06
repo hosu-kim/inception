@@ -8,6 +8,7 @@ RUN apt-get update && apt-get install -y \
     php7.4-mbstring \
     php7.4-xml \
     php7.4-zip \
+    mariadb-client \
     wget \
     curl \
     && rm -rf /var/lib/apt/lists/*
