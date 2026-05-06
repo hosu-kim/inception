@@ -1,36 +1,38 @@
+# Docker Compose format version:
+#   The syntax follows v3
 version: '3'
 
-services:
-  mariadb:
-    build: requirements/mariadb
+services: # list of container blueprints
+  mariadb: # The database which stores and manges all your website's data like MySQL
+    build: requirements/mariadb # directory of Dockerfile
     container_name: mariadb
-    restart: always
-    env_file: .env
-    volumes:
-      - mariadb:/var/lib/mysql
-    networks:
+    restart: always # when system reboots or craches unexpectedly
+    env_file: .env # location of .env
+    volumes: # Think of it as an external drive for containers
+      - mariadb:/var/lib/mysql # name:directory
+    networks: # name of internal network
       - inception
 
-  wordpress:
+  wordpress: # Website builder
     build: requirements/wordpress
     container_name: wordpress
     restart: always
     env_file: .env
-    depends_on:
+    depends_on: # startup order
       - mariadb
     volumes:
       - wordpress:/var/www/html
     networks:
       - inception
 
-  nginx:
+  nginx: # Manges and delivers requests and responses
     build: requirements/nginx
     container_name: nginx
     restart: always
     env_file: .env
-    ports:
-      - "443:443"
-    depends_on:
+    ports: # entrance to the container from the outside
+      - "443:443" # host's(computer's):container's
+    depends_on: # startup order
       - wordpress
     volumes:
       - wordpress:/var/www/html
@@ -39,11 +41,11 @@ services:
 
 volumes:
   mariadb:
-    driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: /home/${LOGIN:-hosu}/data/mariadb
+    driver: local # where to store data => local storage
+    driver_opts: 
+      type: none # nfs, ext4...
+      o: bind # bind: store data in your own directory below
+      device: /home/${LOGIN:-hosu}/data/mariadb # directory
   wordpress:
     driver: local
     driver_opts:
@@ -53,4 +55,7 @@ volumes:
 
 networks:
   inception:
-    driver: bridge
+    driver: bridge # communication method
+
+# bridge: 컴퓨터 안에 가상의 네트워크 스위치(다리)를 하나 만들어
+#         컨테이너끼리는 서로 대화할 수 있지만 외부에서는 함부로 들여다볼 수 없는 네트워크 방식
